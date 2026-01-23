@@ -26,22 +26,16 @@ def download_model():
         print("[✓] Model already downloaded.")
         return
 
-    print("[↓] Downloading model (~450MB, one time only)...")
+    print("[↓] Downloading model via wget (~450MB, one time only)...")
 
-    with requests.get(MODEL_URL, stream=True) as r:
-        r.raise_for_status()
-        total = int(r.headers.get("content-length", 0))
-        downloaded = 0
+    cmd = f"wget -O {MODEL_PATH} \"{MODEL_URL}\""
+    ret = os.system(cmd)
 
-        with open(MODEL_PATH, "wb") as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                if chunk:
-                    f.write(chunk)
-                    downloaded += len(chunk)
-                    percent = downloaded * 100 / total
-                    print(f"\r    {percent:.1f}% downloaded", end="")
+    if ret != 0:
+        print("[X] Download failed.")
+        sys.exit(1)
 
-    print("\n[✓] Download complete.")
+    print("[✓] Download complete.")
 
 # =========================
 # TYPEWRITER EFFECT
