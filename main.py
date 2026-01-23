@@ -5,7 +5,7 @@ from llama_cpp import Llama
 
 # ================= CONFIG =================
 
-AI_NAME = "XpreaAI | uncensored edition"
+AI_NAME = "XpreaAI | uncensored edition. Fine tuned llma model.   Made by Act"
 
 MODEL_URL = (
     "https://huggingface.co/unsloth/gemma-3-270m-it-GGUF/"
