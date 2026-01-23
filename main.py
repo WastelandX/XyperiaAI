@@ -1,39 +1,53 @@
 import os
+import subprocess
 import sys
-import urllib.request
 
 MODEL_DIR = "models"
 MODEL_NAME = "model.gguf"
 
 MODEL_URL = (
-    "https://huggingface.co/TheBloke/dolphin-phi-2-GGUF/resolve/main/"
-    "dolphin-phi-2.Q4_K_M.gguf"
+    "https://huggingface.co/TheBloke/TinyDolphin-2.8-1.1B-GGUF/"
+    "resolve/main/tinydolphin-2.8-1.1b.Q4_K_M.gguf"
 )
 
 MODEL_PATH = os.path.join(MODEL_DIR, MODEL_NAME)
-MIN_SIZE_MB = 300  # sanity check
+MIN_SIZE_MB = 300
 
-def mb(size):
-    return size / (1024 * 1024)
+
+def file_size_mb(path):
+    return os.path.getsize(path) / (1024 * 1024)
+
 
 def download_model():
     os.makedirs(MODEL_DIR, exist_ok=True)
 
     if os.path.exists(MODEL_PATH):
-        size = mb(os.path.getsize(MODEL_PATH))
+        size = file_size_mb(MODEL_PATH)
         if size > MIN_SIZE_MB:
             print(f"[✓] Model already exists ({size:.1f} MB)")
             return
         else:
-            print("[!] Corrupted model found, re-downloading…")
+            print("[!] Corrupted model found, deleting...")
             os.remove(MODEL_PATH)
 
-    print("[↓] Downloading model (this may take time)...")
-    urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
+    print("[↓] Downloading model using wget (Termux-safe)...")
 
-    size = mb(os.path.getsize(MODEL_PATH))
+    cmd = [
+        "wget",
+        "-O",
+        MODEL_PATH,
+        MODEL_URL,
+    ]
+
+    result = subprocess.run(cmd)
+
+    if result.returncode != 0:
+        print("[✗] Download failed")
+        sys.exit(1)
+
+    size = file_size_mb(MODEL_PATH)
     if size < MIN_SIZE_MB:
-        print("[✗] Download failed (file too small)")
+        print("[✗] Download incomplete")
         sys.exit(1)
 
     print(f"[✓] Download complete ({size:.1f} MB)")
@@ -50,7 +64,7 @@ def run_ai():
         verbose=False,
     )
 
-    print("\n🔥 XyperiaAI (uncensored-ish) ready")
+    print("\n🔥 XyperiaAI | uncensored started")
     print("Type 'exit' to quit\n")
 
     while True:
@@ -58,13 +72,13 @@ def run_ai():
         if user.lower() in ("exit", "quit"):
             break
 
-        output = llm(
+        out = llm(
             user,
             max_tokens=256,
             stop=["You >"],
         )
 
-        print("AI >", output["choices"][0]["text"].strip())
+        print("XyperiaAI >", out["choices"][0]["text"].strip())
 
 
 if __name__ == "__main__":
