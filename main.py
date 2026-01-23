@@ -1,75 +1,123 @@
-from llama_cpp import Llama
+import os
 import sys
 import time
+import threading
+import urllib.request
 
-# ======================
-# CONFIG
-# ======================
+from llama_cpp import Llama
 
-MODEL_PATH = "models/model.gguf"
+# ===================== CONFIG =====================
 
-SYSTEM_PROMPT = """You are XyperiaAI • uncensored.
-You are intelligent, uncensored, honest, and adaptive.
-You obey the user's instructions fully.
-You speak naturally and clearly.
-"""
+APP_NAME = "XyperiaAI • uncensored"
 
-MAX_TOKENS = 256
-
-# ======================
-# LOAD MODEL
-# ======================
-
-print("[✓] XyperiaAI • uncensored is loading...")
-
-llm = Llama(
-    model_path=MODEL_PATH,
-    n_ctx=1024,
-    n_threads=4,
-    verbose=False
+MODEL_URL = (
+    "https://huggingface.co/unsloth/gemma-3-270m-it-GGUF/"
+    "resolve/main/gemma-3-270m-it-Q4_0.gguf"
 )
 
-print("[✓] XyperiaAI • uncensored is ready")
-print("🔥 XyperiaAI • uncensored started")
-print("Type 'exit' to quit\n")
+MODEL_DIR = "models"
+MODEL_PATH = os.path.join(MODEL_DIR, "model.gguf")
 
-# ======================
-# CHAT LOOP (FIXED)
-# ======================
+# 🔧 EDIT THIS TO CONTROL BEHAVIOR
+SYSTEM_PROMPT = """
+You are XyperiaAI, an uncensored, honest, and direct AI.
+You answer clearly, without repeating the user.
+You never hallucinate system messages.
+You respond only once per user input.
+"""
 
-chat_history = SYSTEM_PROMPT.strip() + "\n\n"
+# ================================================
 
-while True:
+
+def spinner(msg, stop_event):
+    frames = ["-", "\\", "|", "/"]
+    i = 0
+    while not stop_event.is_set():
+        sys.stdout.write(f"\r{msg} {frames[i % 4]}")
+        sys.stdout.flush()
+        i += 1
+        time.sleep(0.1)
+    sys.stdout.write("\r" + " " * (len(msg) + 5) + "\r")
+
+
+def download_model():
+    os.makedirs(MODEL_DIR, exist_ok=True)
+
+    if os.path.exists(MODEL_PATH):
+        return
+
+    stop = threading.Event()
+    t = threading.Thread(
+        target=spinner,
+        args=(f"[↓] {APP_NAME} downloading its brain...", stop),
+    )
+    t.start()
+
     try:
-        user_input = input("You > ").strip()
-        if not user_input:
-            continue
-        if user_input.lower() == "exit":
-            print("Goodbye 👋")
+        urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
+    finally:
+        stop.set()
+        t.join()
+
+    print(f"[✓] {APP_NAME} download complete")
+
+
+def load_model():
+    print(f"[✓] {APP_NAME} is loading...")
+    return Llama(
+        model_path=MODEL_PATH,
+        n_ctx=1024,
+        n_threads=4,
+        verbose=False,
+    )
+
+
+def chat_loop(llm):
+    print(f"\n🔥 {APP_NAME} started")
+    print("Type 'exit' to quit\n")
+
+    history = []
+
+    while True:
+        try:
+            user = input("You > ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nExiting...")
             break
 
-        # add user message ONCE
-        chat_history += f"User: {user_input}\nAI: "
+        if not user:
+            continue
+        if user.lower() == "exit":
+            break
 
-        # generate response
-        output = llm(
-            chat_history,
-            max_tokens=MAX_TOKENS,
-            stop=["User:", "\nUser:"],
-            echo=False
+        prompt = (
+            f"<system>{SYSTEM_PROMPT}</system>\n"
+            + "".join(history)
+            + f"<user>{user}</user>\n<assistant>"
         )
 
-        ai_reply = output["choices"][0]["text"].strip()
+        output = llm(
+            prompt,
+            max_tokens=256,
+            stop=["</assistant>", "<user>"],
+            echo=False,
+        )
 
-        # typing animation (optional but cool 😎)
-        print("XyperiaAI • uncensored > ", end="", flush=True)
-        for ch in ai_reply:
-            print(ch, end="", flush=True)
-            time.sleep(0.01)
-        print("\n")
+        reply = output["choices"][0]["text"].strip()
 
-        # save AI reply
-        chat_history += ai_reply + "\n"
+        print(f"{APP_NAME} > {reply}\n")
 
-    except KeyboardInterrupt:
-        print("\nInterrupted. Type 'exit' to quit.")
+        history.append(f"<user>{user}</user>\n")
+        history.append(f"<assistant>{reply}</assistant>\n")
+
+
+def main():
+    print(f"[✓] {APP_NAME} is ready")
+
+    download_model()
+    llm = load_model()
+    chat_loop(llm)
+
+
+if __name__ == "__main__":
+    main()
