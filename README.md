@@ -16,7 +16,7 @@ A lightweight, local, uncensored AI chatbot powered by **Dolphin-Phi-2** and `ll
 ## Installation
 
 ```bash
-git clone https://github.com/YOURNAME/XyperiaAI.git
+git clone https://github.com/WastelandX/XyperiaAI.git
 cd XyperiaAI
 pip install -r requirements.txt
 python main.py
