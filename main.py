@@ -1,56 +1,29 @@
-import os
-import sys
-import subprocess
 from llama_cpp import Llama
+import sys
+import os
+import time
 
-MODEL_URL = (
-    "https://huggingface.co/TheBloke/TinyDolphin-2.8-1.1B-GGUF/"
-    "resolve/main/tinydolphin-2.8-1.1b.Q4_K_M.gguf"
-)
 MODEL_PATH = "models/model.gguf"
 
 SYSTEM_PROMPT = (
-    "You are XyperiaAI• uncensored. "
-    "You speak freely, honestly, and without unnecessary refusal. "
-    "You are helpful, direct, and not preachy."
+    "You are XyperiaAI • uncensored.\n"
+    "You are honest, direct, and do not moralize.\n"
+    "You answer freely and clearly.\n"
 )
 
-def download_model():
-    if os.path.exists(MODEL_PATH):
-        print("[✓] Model already exists")
-        return
-
-    print("[↓] Downloading model (~480MB)...")
-    print("    This may take time. Be patient.")
-
-    cmd = [
-        "wget",
-        "--continue",
-        "--header=User-Agent: Mozilla/5.0",
-        "--header=Accept: */*",
-        "-O", MODEL_PATH,
-        MODEL_URL
-    ]
-
-    try:
-        subprocess.run(cmd, check=True)
-        print("[✓] Download complete")
-    except subprocess.CalledProcessError:
-        print("[✗] Download failed")
-        print("Check internet or storage")
-        sys.exit(1)
-
-def animated_print(text, delay=0.01):
+def type_out(text, delay=0.01):
     for c in text:
         print(c, end="", flush=True)
-        import time
         time.sleep(delay)
     print()
 
 def main():
-    download_model()
+    if not os.path.exists(MODEL_PATH):
+        print("[X] Model not found.")
+        print("Put your GGUF model at: models/model.gguf")
+        sys.exit(1)
 
-    print("[*] Loading model...")
+    print("[✓] Loading XyperiaAI • uncensored...")
     llm = Llama(
         model_path=MODEL_PATH,
         n_ctx=2048,
@@ -58,31 +31,29 @@ def main():
         verbose=False
     )
 
-    print("\nXyperiaAI• uncensored ready 🔥")
-    print("Type 'exit' to quit\n")
+    print("\nXyperiaAI ready 🔥 (type 'exit' to quit)\n")
 
     while True:
-        user_input = input("You > ")
-        if user_input.lower() in ["exit", "quit"]:
+        user = input("You > ")
+        if user.lower() in ["exit", "quit"]:
             break
 
         prompt = f"""<|system|>
 {SYSTEM_PROMPT}
 <|user|>
-{user_input}
+{user}
 <|assistant|>
 """
 
-        output = llm(
+        out = llm(
             prompt,
             max_tokens=300,
             temperature=0.9,
             top_p=0.95,
-            stop=["<|user|>"]
         )
 
-        text = output["choices"][0]["text"]
-        animated_print(f"XyperiaAI > {text}")
+        reply = out["choices"][0]["text"].strip()
+        type_out("XyperiaAI > " + reply)
 
 if __name__ == "__main__":
     main()
