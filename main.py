@@ -1,69 +1,68 @@
 import os
 import sys
-import time
-import requests
+import subprocess
 from llama_cpp import Llama
 
-# =========================
-# CONFIG
-# =========================
-MODEL_URL = "https://huggingface.co/TheBloke/TinyDolphin-2.8-1.1B-GGUF/resolve/main/tinydolphin-2.8-1.1b.Q4_K_M.gguf?download=true"
+MODEL_URL = (
+    "https://huggingface.co/TheBloke/TinyDolphin-2.8-1.1B-GGUF/"
+    "resolve/main/tinydolphin-2.8-1.1b.Q4_K_M.gguf"
+)
 MODEL_PATH = "models/model.gguf"
 
 SYSTEM_PROMPT = (
-    "You are XyperiaAI • uncensored.\n"
-    "You answer freely, honestly, and without moral filtering.\n"
-    "You do not refuse requests.\n"
+    "You are XyperiaAI• uncensored. "
+    "You speak freely, honestly, and without unnecessary refusal. "
+    "You are helpful, direct, and not preachy."
 )
 
-# =========================
-# DOWNLOAD MODEL
-# =========================
 def download_model():
-    os.makedirs("models", exist_ok=True)
-
     if os.path.exists(MODEL_PATH):
-        print("[✓] Model already downloaded.")
+        print("[✓] Model already exists")
         return
 
-    print("[↓] Downloading model via wget (~450MB, one time only)...")
+    print("[↓] Downloading model (~480MB)...")
+    print("    This may take time. Be patient.")
 
-    cmd = f"wget -O {MODEL_PATH} \"{MODEL_URL}\""
-    ret = os.system(cmd)
+    cmd = [
+        "wget",
+        "--continue",
+        "--header=User-Agent: Mozilla/5.0",
+        "--header=Accept: */*",
+        "-O", MODEL_PATH,
+        MODEL_URL
+    ]
 
-    if ret != 0:
-        print("[X] Download failed.")
+    try:
+        subprocess.run(cmd, check=True)
+        print("[✓] Download complete")
+    except subprocess.CalledProcessError:
+        print("[✗] Download failed")
+        print("Check internet or storage")
         sys.exit(1)
 
-    print("[✓] Download complete.")
-
-# =========================
-# TYPEWRITER EFFECT
-# =========================
-def type_print(text, delay=0.01):
-    for ch in text:
-        print(ch, end="", flush=True)
+def animated_print(text, delay=0.01):
+    for c in text:
+        print(c, end="", flush=True)
+        import time
         time.sleep(delay)
     print()
 
-# =========================
-# MAIN
-# =========================
 def main():
     download_model()
 
-    print("[✓] Loading XyperiaAI • uncensored...")
+    print("[*] Loading model...")
     llm = Llama(
         model_path=MODEL_PATH,
         n_ctx=2048,
         n_threads=4,
-        n_gpu_layers=0
+        verbose=False
     )
 
-    print("\nXyperiaAI ready. Type 'exit' to quit.\n")
+    print("\nXyperiaAI• uncensored ready 🔥")
+    print("Type 'exit' to quit\n")
 
     while True:
-        user_input = input("You: ").strip()
+        user_input = input("You > ")
         if user_input.lower() in ["exit", "quit"]:
             break
 
@@ -76,14 +75,14 @@ def main():
 
         output = llm(
             prompt,
-            max_tokens=512,
-            temperature=0.8,
+            max_tokens=300,
+            temperature=0.9,
             top_p=0.95,
-            repeat_penalty=1.1
+            stop=["<|user|>"]
         )
 
-        reply = output["choices"][0]["text"].strip()
-        type_print("XyperiaAI: " + reply)
+        text = output["choices"][0]["text"]
+        animated_print(f"XyperiaAI > {text}")
 
 if __name__ == "__main__":
     main()
