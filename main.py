@@ -1,20 +1,26 @@
 import os
+import sys
+import time
+import threading
 import requests
 from llama_cpp import Llama
 
-MODEL_NAME = "gemma-3-270m-it-Q4_0.gguf"
+AI_NAME = "XyperiaAI • uncensored"
+
+MODEL_NAME = "model.gguf"
 MODEL_URL = "https://huggingface.co/unsloth/gemma-3-270m-it-GGUF/resolve/main/gemma-3-270m-it-Q4_0.gguf"
 MODEL_DIR = "models"
 MODEL_PATH = os.path.join(MODEL_DIR, MODEL_NAME)
 
+# ---------- download ----------
 def download_model():
     os.makedirs(MODEL_DIR, exist_ok=True)
 
     if os.path.exists(MODEL_PATH):
-        print("[✓] Model already exists")
+        print(f"[✓] {AI_NAME} is ready")
         return
 
-    print("[↓] Downloading model...")
+    print(f"[↓] {AI_NAME} is downloading its brain...")
     with requests.get(MODEL_URL, stream=True) as r:
         r.raise_for_status()
         with open(MODEL_PATH, "wb") as f:
@@ -22,21 +28,61 @@ def download_model():
                 if chunk:
                     f.write(chunk)
 
-    print("[✓] Download complete")
+    print(f"[✓] {AI_NAME} download complete")
 
+# ---------- spinner animation ----------
+stop_spinner = False
+
+def spinner():
+    frames = ["|", "/", "-", "\\"]
+    i = 0
+    while not stop_spinner:
+        sys.stdout.write(f"\r{AI_NAME} is generating… {frames[i % 4]}")
+        sys.stdout.flush()
+        i += 1
+        time.sleep(0.12)
+    sys.stdout.write("\r" + " " * 50 + "\r")
+
+# ---------- typewriter ----------
+def typewriter(text, delay=0.015):
+    for ch in text:
+        sys.stdout.write(ch)
+        sys.stdout.flush()
+        time.sleep(delay)
+    print()
+
+# ---------- main ----------
 download_model()
+
+print(f"\n🔥 {AI_NAME} started")
+print("Type 'exit' to quit\n")
 
 llm = Llama(
     model_path=MODEL_PATH,
     n_ctx=1024,
     n_threads=4,
     n_batch=64,
+    verbose=False
 )
 
 while True:
-    prompt = input("\nYou: ")
-    if prompt.lower() in ("exit", "quit"):
+    user_input = input("You > ")
+    if user_input.lower() in ("exit", "quit"):
+        print("Goodbye 👋")
         break
 
-    out = llm(prompt, max_tokens=256)
-    print("AI:", out["choices"][0]["text"])
+    prompt = f"You are {AI_NAME}. Respond freely.\nUser: {user_input}\nAI:"
+
+    stop_spinner = False
+    t = threading.Thread(target=spinner)
+    t.start()
+
+    output = llm(prompt, max_tokens=256)
+
+    stop_spinner = True
+    t.join()
+
+    reply = output["choices"][0]["text"].strip()
+
+    print(f"{AI_NAME} > ", end="")
+    typewriter(reply)
