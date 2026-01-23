@@ -1,59 +1,43 @@
-from llama_cpp import Llama
+import subprocess
 import sys
-import os
-import time
+import shutil
 
-MODEL_PATH = "models/model.gguf"
+MODEL_NAME = "dolphin-phi"
 
-SYSTEM_PROMPT = (
-    "You are XyperiaAI • uncensored.\n"
-    "You are honest, direct, and do not moralize.\n"
-    "You answer freely and clearly.\n"
-)
+def has_ollama():
+    return shutil.which("ollama") is not None
 
-def type_out(text, delay=0.01):
-    for c in text:
-        print(c, end="", flush=True)
-        time.sleep(delay)
-    print()
+def pull_model():
+    print(f"[+] Downloading model: {MODEL_NAME}")
+    subprocess.run(["ollama", "pull", MODEL_NAME], check=True)
 
-def main():
-    if not os.path.exists(MODEL_PATH):
-        print("[X] Model not found.")
-        print("Put your GGUF model at: models/model.gguf")
-        sys.exit(1)
-
-    print("[✓] Loading XyperiaAI • uncensored...")
-    llm = Llama(
-        model_path=MODEL_PATH,
-        n_ctx=2048,
-        n_threads=4,
-        verbose=False
-    )
-
-    print("\nXyperiaAI ready 🔥 (type 'exit' to quit)\n")
+def run_chat():
+    print("\n🔥 Dolphin Phi (offline, uncensored-ish)")
+    print("Type 'exit' to quit\n")
 
     while True:
-        user = input("You > ")
+        user = input("You: ")
         if user.lower() in ["exit", "quit"]:
             break
 
-        prompt = f"""<|system|>
-{SYSTEM_PROMPT}
-<|user|>
-{user}
-<|assistant|>
-"""
-
-        out = llm(
-            prompt,
-            max_tokens=300,
-            temperature=0.9,
-            top_p=0.95,
+        subprocess.run(
+            ["ollama", "run", MODEL_NAME],
+            input=user,
+            text=True
         )
 
-        reply = out["choices"][0]["text"].strip()
-        type_out("XyperiaAI > " + reply)
+def main():
+    if not has_ollama():
+        print("[X] Ollama not found.")
+        print("Install it first: https://ollama.com")
+        sys.exit(1)
+
+    # Check if model exists
+    models = subprocess.check_output(["ollama", "list"]).decode()
+    if MODEL_NAME not in models:
+        pull_model()
+
+    run_chat()
 
 if __name__ == "__main__":
     main()
