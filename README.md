@@ -1,6 +1,6 @@
 # XyperiaAI • Uncensored
 
-A lightweight, local, uncensored AI chatbot powered by `llama-cpp-python`.
+A lightweight, local, uncensored AI chatbot powered by ollama models
 
 ## Features
 - 🔥 Uncensored responses
