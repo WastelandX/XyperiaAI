@@ -1,79 +1,135 @@
-import requests
-import time
+import os
+import subprocess
 import sys
-from colorama import Fore, Style, init
+import time
+import threading
 
-init(autoreset=True)
+# ================= CONFIG =================
+MODEL_BASE = "tinydolphin"
+MODEL_NAME = "xyperia"
+AUTHOR = "ACT"
+TYPING_DELAY = 0.01
+# =========================================
 
-AI_NAME = "Xyperia"
-API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-def type_print(text, delay=0.015):
-    for c in text:
-        sys.stdout.write(c)
+# -------- Colors --------
+class C:
+    RESET = "\033[0m"
+    CYAN = "\033[96m"
+    GREEN = "\033[92m"
+    RED = "\033[91m"
+    YELLOW = "\033[93m"
+    MAGENTA = "\033[95m"
+    BOLD = "\033[1m"
+
+
+def clear():
+    os.system("clear")
+
+
+def type_print(text, delay=TYPING_DELAY):
+    for char in text:
+        sys.stdout.write(char)
         sys.stdout.flush()
         time.sleep(delay)
     print()
 
-def banner():
-    print(Fore.CYAN + Style.BRIGHT + r"""
-██╗  ██╗██╗   ██╗██████╗ ███████╗██████╗ ██╗ █████╗
+
+def logo():
+    print(C.CYAN + C.BOLD)
+    print(r"""
+██╗  ██╗██╗   ██╗██████╗ ███████╗██████╗ ██╗ █████╗ 
 ╚██╗██╔╝╚██╗ ██╔╝██╔══██╗██╔════╝██╔══██╗██║██╔══██╗
  ╚███╔╝  ╚████╔╝ ██████╔╝█████╗  ██████╔╝██║███████║
  ██╔██╗   ╚██╔╝  ██╔═══╝ ██╔══╝  ██╔══██╗██║██╔══██║
 ██╔╝ ██╗   ██║   ██║     ███████╗██║  ██║██║██║  ██║
 ╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝
-""")
-    print(Fore.MAGENTA + "Author |• ACT")
-    print(Fore.GREEN + "✔ Xyperia Online\n")
+    """)
+    print(C.MAGENTA + f"Author |• {AUTHOR}")
+    print(C.RESET)
 
-def main():
-    banner()
-    api_key = input(Fore.YELLOW + "Enter OpenRouter API key: ").strip()
 
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-
-    system_prompt = (
-        "You are XyperiaAI. Be direct, concise, intelligent, and honest. "
-        "Avoid unnecessary filler, rhyming, roleplay, or self-talk. "
-        "Answer clearly and efficiently."
+def run(cmd, quiet=False):
+    subprocess.run(
+        cmd,
+        shell=True,
+        stdout=subprocess.DEVNULL if quiet else None,
+        stderr=subprocess.DEVNULL if quiet else None
     )
 
-    print(Fore.YELLOW + "Type 'exit' to quit.\n")
+
+def ensure_ollama():
+    try:
+        subprocess.check_output("ollama --version", shell=True)
+    except:
+        print(C.RED + "❌ Ollama not found. Install Ollama first." + C.RESET)
+        sys.exit(1)
+
+
+def start_ollama():
+    run("ollama serve", quiet=True)
+
+
+def ensure_model():
+    try:
+        subprocess.check_output(f"ollama show {MODEL_NAME}", shell=True)
+    except:
+        print(C.YELLOW + "📥 Preparing XyperiaAI (TinyDolphin)..." + C.RESET)
+        run(f"ollama pull {MODEL_BASE}")
+
+        run(f"""
+ollama create {MODEL_NAME} -f - <<EOF
+FROM {MODEL_BASE}
+SYSTEM You are XyperiaAI.
+You are direct, concise, and factual.
+Do not rhyme. Do not roleplay.
+Do not invent names or identities.
+Do not repeat the user's input.
+Avoid filler, politeness, or unnecessary explanations.
+Answer clearly and straight to the point.
+EOF
+""")
+
+
+def chat():
+    clear()
+    logo()
+    print(C.GREEN + "✔ XyperiaAI Online (TinyDolphin)" + C.RESET)
+    print(C.YELLOW + "Type 'exit' to quit\n" + C.RESET)
 
     while True:
-        user = input(Fore.CYAN + "You: " + Style.RESET_ALL).strip()
-        if user.lower() in ("exit", "quit"):
-            print(Fore.RED + "👋 Bye.")
-            break
-        if not user:
-            continue
-
-        payload = {
-            "model": "mistralai/mistral-7b-instruct",
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user}
-            ],
-            "temperature": 0.9,
-            "top_p": 0.95,
-            "max_tokens": 300
-        }
-
         try:
-            r = requests.post(API_URL, headers=headers, json=payload, timeout=60)
-            r.raise_for_status()
-            reply = r.json()["choices"][0]["message"]["content"]
+            user = input(C.CYAN + "You: " + C.RESET).strip()
+            if user.lower() in ("exit", "quit"):
+                print(C.RED + "👋 Bye." + C.RESET)
+                break
+            if not user:
+                continue
 
-            print(Fore.GREEN + f"{AI_NAME}: ", end="")
-            type_print(reply.strip())
+            proc = subprocess.Popen(
+                f'ollama run {MODEL_NAME} "{user}"',
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True
+            )
 
-        except Exception as e:
-            print(Fore.RED + f"⚠ Error: {e}")
+            print(C.GREEN + "XyperiaAI: " + C.RESET, end="")
+            for line in proc.stdout:
+                type_print(line.strip())
+
+        except KeyboardInterrupt:
+            print("\n" + C.RED + "👋 Interrupted." + C.RESET)
             break
 
+
+# ============== MAIN ==============
 if __name__ == "__main__":
-    main()
+    clear()
+    ensure_ollama()
+
+    threading.Thread(target=start_ollama, daemon=True).start()
+    time.sleep(1)
+
+    ensure_model()
+    chat()
