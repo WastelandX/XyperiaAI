@@ -1,79 +1,149 @@
-import subprocess
 import os
+import subprocess
+import sys
+import time
+import threading
 
-MODEL = "phi:2"
-AI_NAME = "XyperiaAI"
+# ================= CONFIG =================
+MODEL_BASE = "phi"
+MODEL_NAME = "xyperia-phi2"
 AUTHOR = "ACT"
 
-# Colors
-CYAN = "\033[96m"
-GREEN = "\033[92m"
-MAGENTA = "\033[95m"
-YELLOW = "\033[93m"
-RESET = "\033[0m"
-RED = "\033[91m"
+TYPING_DELAY = 0.0  # disabled for speed & stability
+# =========================================
 
-def banner():
+
+# -------- Colors --------
+class C:
+    RESET = "\033[0m"
+    CYAN = "\033[96m"
+    GREEN = "\033[92m"
+    RED = "\033[91m"
+    YELLOW = "\033[93m"
+    MAGENTA = "\033[95m"
+    BOLD = "\033[1m"
+
+
+def clear():
     os.system("clear")
-    print(CYAN + r"""
+
+
+def logo():
+    print(C.CYAN + C.BOLD)
+    print(r"""
 ██╗  ██╗██╗   ██╗██████╗ ███████╗██████╗ ██╗ █████╗
 ╚██╗██╔╝╚██╗ ██╔╝██╔══██╗██╔════╝██╔══██╗██║██╔══██╗
  ╚███╔╝  ╚████╔╝ ██████╔╝█████╗  ██████╔╝██║███████║
  ██╔██╗   ╚██╔╝  ██╔═══╝ ██╔══╝  ██╔══██╗██║██╔══██║
 ██╔╝ ██╗   ██║   ██║     ███████╗██║  ██║██║██║  ██║
 ╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝
-""" + RESET)
-    print(MAGENTA + f"Author |• {AUTHOR}" + RESET)
-    print(GREEN + f"✔ {AI_NAME} Online" + RESET)
-    print(YELLOW + "Type 'exit' to quit\n" + RESET)
+    """)
+    print(C.MAGENTA + f"Author |• {AUTHOR}")
+    print(C.RESET)
 
-def run_phi(prompt):
+
+def run(cmd, quiet=False):
     try:
-        p = subprocess.Popen(
-            ["ollama", "run", MODEL],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
+        if quiet:
+            subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        else:
+            subprocess.run(cmd, shell=True)
+    except:
+        pass
 
-        # VERY SMALL PROMPT → prevents crash
-        clean_prompt = (
-            "Answer briefly and directly.\n"
-            "No poetry. No roleplay.\n"
-            f"User: {prompt}\n"
-            f"{AI_NAME}:"
-        )
 
-        out, err = p.communicate(clean_prompt, timeout=30)
+def ensure_ollama():
+    try:
+        subprocess.check_output("ollama --version", shell=True)
+    except:
+        print(C.RED + "❌ Ollama not found." + C.RESET)
+        sys.exit(1)
 
-        if err.strip():
-            return RED + "Model error or out of memory." + RESET
 
-        return out.strip()
+def start_ollama():
+    run("ollama serve", quiet=True)
 
-    except subprocess.TimeoutExpired:
-        p.kill()
-        return RED + "Model timed out." + RESET
 
-    except Exception as e:
-        return RED + "Crash occurred." + RESET
+def ensure_model():
+    try:
+        subprocess.check_output(f"ollama show {MODEL_NAME}", shell=True)
+    except:
+        print(C.YELLOW + "📥 Preparing ultra-light Phi-2 model..." + C.RESET)
+        run(f"ollama pull {MODEL_BASE}")
 
-def main():
-    banner()
+        modelfile = f"""
+FROM {MODEL_BASE}
+
+PARAMETER temperature 0.3
+PARAMETER top_p 0.8
+PARAMETER num_ctx 512
+PARAMETER num_predict 128
+PARAMETER repeat_penalty 1.1
+
+SYSTEM \"\"\"
+You are XyperiaAI.
+Author | ACT.
+
+Be direct.
+No poetry.
+No roleplay.
+No filler.
+Answer briefly and clearly.
+\"\"\"
+"""
+        with open("Modelfile", "w") as f:
+            f.write(modelfile)
+
+        run(f"ollama create {MODEL_NAME} -f Modelfile")
+        os.remove("Modelfile")
+
+
+def chat():
+    clear()
+    logo()
+    print(C.GREEN + "✔ XyperiaAI Online (Phi-2 Light)" + C.RESET)
+    print(C.YELLOW + "Type 'exit' to quit\n" + C.RESET)
+
     while True:
         try:
-            user = input(CYAN + "You: " + RESET).strip()
-            if user.lower() in ["exit", "quit"]:
-                print(GREEN + "Bye 👋" + RESET)
+            user = input(C.CYAN + "You: " + C.RESET).strip()
+            if user.lower() in ("exit", "quit"):
+                print(C.RED + "👋 Bye." + C.RESET)
                 break
 
-            reply = run_phi(user)
-            print(GREEN + f"{AI_NAME}: " + RESET + reply + "\n")
+            if not user:
+                continue
+
+            proc = subprocess.Popen(
+                ["ollama", "run", MODEL_NAME],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+
+            stdout, stderr = proc.communicate(user, timeout=30)
+
+            if stderr:
+                print(C.RED + "XyperiaAI: Model error or out of memory." + C.RESET)
+            else:
+                print(C.GREEN + "XyperiaAI: " + C.RESET + stdout.strip())
+
+        except subprocess.TimeoutExpired:
+            print(C.RED + "XyperiaAI: Timeout / low memory." + C.RESET)
 
         except KeyboardInterrupt:
-            print("\n" + GREEN + "Exited." + RESET)
+            print("\n" + C.RED + "👋 Interrupted." + C.RESET)
             break
 
+
+# ============== MAIN ==============
 if __name__ == "__main__":
-    main()
+    clear()
+    ensure_ollama()
+
+    threading.Thread(target=start_ollama, daemon=True).start()
+    time.sleep(1)
+
+    ensure_model()
+    chat()
