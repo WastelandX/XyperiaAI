@@ -5,11 +5,11 @@ import time
 import threading
 
 # ================= CONFIG =================
-MODEL_BASE = "dolphin-phi:2"
+MODEL_BASE = "dolphin-phi:2.7b"
 MODEL_NAME = "xyperia"
 AUTHOR = "ACT"
 
-TYPING_DELAY = 0.015
+TYPING_DELAY = 0.01
 # ==========================================
 
 
@@ -45,7 +45,7 @@ def logo():
  ██╔██╗   ╚██╔╝  ██╔═══╝ ██╔══╝  ██╔══██╗██║██╔══██║
 ██╔╝ ██╗   ██║   ██║     ███████╗██║  ██║██║██║  ██║
 ╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝
-    """)
+""")
     print(C.MAGENTA + f"Author |• {AUTHOR}")
     print(C.RESET)
 
@@ -73,32 +73,18 @@ def ensure_model():
     try:
         subprocess.check_output(f"ollama show {MODEL_NAME}", shell=True)
     except:
-        print(C.YELLOW + "📥 Preparing XyperiaAI (Dolphin-Phi-2)..." + C.RESET)
+        print(C.YELLOW + "📥 Preparing Xyperia (Phi-2) model..." + C.RESET)
         run(f"ollama pull {MODEL_BASE}")
-
         run(f"""
 ollama create {MODEL_NAME} -f - <<EOF
 FROM {MODEL_BASE}
-
-PARAMETER num_ctx 512
-PARAMETER num_predict 128
-PARAMETER temperature 0.4
-PARAMETER top_p 0.9
-PARAMETER repeat_penalty 1.2
-
 SYSTEM You are XyperiaAI.
-
-Rules:
-- Answer directly and briefly
-- Do not repeat the question
-- Do not simulate the user
-- Do not roleplay or add personality
-- Do not mention policies or safety systems
-- No filler, no creativity
-
-Behavior:
-- Greeting → short greeting
-- Question → direct answer only
+You are concise, direct, factual, and minimal.
+Do not roleplay.
+Do not rhyme.
+Do not repeat the user's message.
+Do not invent names.
+Answer clearly in as few words as possible.
 EOF
 """)
 
@@ -128,8 +114,22 @@ def chat():
             )
 
             print(C.GREEN + "XyperiaAI: " + C.RESET, end="")
+
             for line in proc.stdout:
-                type_print(line.rstrip())
+                line = line.strip()
+
+                # ---- HARD FILTER (fixes drunk behavior) ----
+                if not line:
+                    continue
+                if line.lower().startswith(("you:", "user:", "assistant:")):
+                    continue
+                if line in ["?", "??", "...", "…"]:
+                    continue
+                if len(line) <= 1:
+                    continue
+                # -------------------------------------------
+
+                type_print(line)
 
         except KeyboardInterrupt:
             print("\n" + C.RED + "👋 Interrupted." + C.RESET)
