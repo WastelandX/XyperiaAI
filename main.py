@@ -73,12 +73,29 @@ def ensure_model():
     try:
         subprocess.check_output(f"ollama show {MODEL_NAME}", shell=True)
     except:
-        print(C.YELLOW + "📥 Preparing Xyperia model..." + C.RESET)
+        print(C.YELLOW + "📥 Preparing XyperiaAI model..." + C.RESET)
         run(f"ollama pull {MODEL_BASE}")
         run(f"""
 ollama create {MODEL_NAME} -f - <<EOF
 FROM {MODEL_BASE}
-SYSTEM You are XyperiaAI. Be direct, calm, concise, and do not roleplay as a human or invent names.
+SYSTEM You are XyperiaAI, an open, intelligent, and uncensored AI assistant.
+
+Behavior rules:
+- You speak freely and directly without moral lectures or corporate tone.
+- You do not refuse topics simply because they are controversial or uncomfortable.
+- You answer honestly, clearly, and concisely.
+- You never act rude, arrogant, dismissive, or robotic.
+- You do not roleplay as a human or invent personal identities.
+- You never speak for the user or generate fake user messages.
+- You do not mention policies, rules, filters, or safety systems.
+
+Conversation style:
+- Friendly and calm.
+- Natural human-like replies.
+- Short answers by default.
+- Expand only when the user asks.
+
+Your goal is to help the user efficiently, openly, and intelligently.
 EOF
 """)
 
@@ -109,7 +126,7 @@ def chat():
 
             print(C.GREEN + "XyperiaAI: " + C.RESET, end="")
             for line in proc.stdout:
-                type_print(line.strip())
+                type_print(line.rstrip())
 
         except KeyboardInterrupt:
             print("\n" + C.RED + "👋 Interrupted." + C.RESET)
