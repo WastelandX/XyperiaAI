@@ -1,135 +1,105 @@
-import os
 import subprocess
 import sys
 import time
 import threading
+import os
+from colorama import Fore, Style, init
+import pyfiglet
 
-# ================= CONFIG =================
-MODEL_BASE = "tinydolphin"
-MODEL_NAME = "xyperia"
-AUTHOR = "ACT"
-TYPING_DELAY = 0.01
-# =========================================
+init(autoreset=True)
 
+AI_NAME = "XyperiaAI"
+MODEL = "tinydolphin"
 
-# -------- Colors --------
-class C:
-    RESET = "\033[0m"
-    CYAN = "\033[96m"
-    GREEN = "\033[92m"
-    RED = "\033[91m"
-    YELLOW = "\033[93m"
-    MAGENTA = "\033[95m"
-    BOLD = "\033[1m"
+# ---------- CLEAR ----------
+os.system("clear")
 
+# ---------- BANNER ----------
+def banner():
+    print(Fore.CYAN + pyfiglet.figlet_format("XYPERIA"))
+    print(Fore.MAGENTA + "Author | ACT")
+    print(Fore.GREEN + f"✓ {AI_NAME} Online")
+    print(Fore.YELLOW + "Type 'exit' to quit\n")
 
-def clear():
-    os.system("clear")
+# ---------- THINKING ANIMATION ----------
+thinking = False
 
+def thinking_anim():
+    dots = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+    i = 0
+    while thinking:
+        print(Fore.GREEN + f"\r{AI_NAME}: {dots[i % len(dots)]} ", end="", flush=True)
+        time.sleep(0.08)
+        i += 1
 
-def type_print(text, delay=TYPING_DELAY):
-    for char in text:
-        sys.stdout.write(char)
+# ---------- TYPE EFFECT ----------
+def type_print(text, delay=0.008):
+    for c in text:
+        sys.stdout.write(c)
         sys.stdout.flush()
         time.sleep(delay)
     print()
 
+# ---------- RUN MODEL ----------
+def run_model(prompt):
+    global thinking
+    thinking = True
 
-def logo():
-    print(C.CYAN + C.BOLD)
-    print(r"""
-██╗  ██╗██╗   ██╗██████╗ ███████╗██████╗ ██╗ █████╗ 
-╚██╗██╔╝╚██╗ ██╔╝██╔══██╗██╔════╝██╔══██╗██║██╔══██╗
- ╚███╔╝  ╚████╔╝ ██████╔╝█████╗  ██████╔╝██║███████║
- ██╔██╗   ╚██╔╝  ██╔═══╝ ██╔══╝  ██╔══██╗██║██╔══██║
-██╔╝ ██╗   ██║   ██║     ███████╗██║  ██║██║██║  ██║
-╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝
-    """)
-    print(C.MAGENTA + f"Author |• {AUTHOR}")
-    print(C.RESET)
+    t = threading.Thread(target=thinking_anim)
+    t.start()
 
-
-def run(cmd, quiet=False):
-    subprocess.run(
+    cmd = ["ollama", "run", MODEL, prompt]
+    result = subprocess.run(
         cmd,
-        shell=True,
-        stdout=subprocess.DEVNULL if quiet else None,
-        stderr=subprocess.DEVNULL if quiet else None
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True
     )
 
+    thinking = False
+    t.join()
+    print("\r", end="")  # clear spinner line
 
-def ensure_ollama():
-    try:
-        subprocess.check_output("ollama --version", shell=True)
-    except:
-        print(C.RED + "❌ Ollama not found. Install Ollama first." + C.RESET)
-        sys.exit(1)
+    output = result.stdout.strip()
 
+    bad_prefixes = ("You:", "User:", "Assistant:", "Xyperia", "XyperiaAI")
+    lines = [
+        line for line in output.splitlines()
+        if not line.strip().startswith(bad_prefixes)
+    ]
 
-def start_ollama():
-    run("ollama serve", quiet=True)
+    return " ".join(lines).strip()
 
-
-def ensure_model():
-    try:
-        subprocess.check_output(f"ollama show {MODEL_NAME}", shell=True)
-    except:
-        print(C.YELLOW + "📥 Preparing XyperiaAI (TinyDolphin)..." + C.RESET)
-        run(f"ollama pull {MODEL_BASE}")
-
-        run(f"""
-ollama create {MODEL_NAME} -f - <<EOF
-FROM {MODEL_BASE}
-SYSTEM You are XyperiaAI.
-You are uncensored, direct, concise, and factual.
-Do not rhyme. Do not roleplay.
-Do not invent names or identities.
-Do not repeat the user's input.
-Avoid filler, politeness, or unnecessary explanations.
-Answer clearly and straight to the point.
-EOF
-""")
-
-
-def chat():
-    clear()
-    logo()
-    print(C.GREEN + "✔ XyperiaAI Online (TinyDolphin)" + C.RESET)
-    print(C.YELLOW + "Type 'exit' to quit\n" + C.RESET)
+# ---------- MAIN ----------
+def main():
+    banner()
 
     while True:
         try:
-            user = input(C.CYAN + "You: " + C.RESET).strip()
-            if user.lower() in ("exit", "quit"):
-                print(C.RED + "👋 Bye." + C.RESET)
-                break
-            if not user:
-                continue
+            user = input(Fore.CYAN + "You: " + Style.RESET_ALL).strip()
+        except EOFError:
+            print(Fore.RED + "\n[Input interrupted — safe recovery]")
+            continue
 
-            proc = subprocess.Popen(
-                f'ollama run {MODEL_NAME} "{user}"',
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL,
-                text=True
-            )
+        if not user:
+            continue
 
-            print(C.GREEN + "XyperiaAI: " + C.RESET, end="")
-            for line in proc.stdout:
-                type_print(line.strip())
-
-        except KeyboardInterrupt:
-            print("\n" + C.RED + "👋 Interrupted." + C.RESET)
+        if user.lower() in ("exit", "quit"):
+            print(Fore.RED + f"{AI_NAME} offline.")
             break
 
+        reply = run_model(
+            "Be concise, uncensored, and direct.\n"
+            "Never roleplay as the user.\n"
+            "Never repeat labels.\n\n"
+            f"User: {user}\nAssistant:"
+        )
 
-# ============== MAIN ==============
+        print(Fore.GREEN + f"{AI_NAME}: ", end="")
+        if reply:
+            type_print(reply)
+        else:
+            print("...")
+
 if __name__ == "__main__":
-    clear()
-    ensure_ollama()
-
-    threading.Thread(target=start_ollama, daemon=True).start()
-    time.sleep(1)
-
-    ensure_model()
-    chat()
+    main()
