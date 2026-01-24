@@ -1,6 +1,6 @@
 import subprocess
-import time
 import sys
+import time
 import os
 from colorama import Fore, Style, init
 import pyfiglet
@@ -10,101 +10,97 @@ init(autoreset=True)
 AI_NAME = "XyperiaAI"
 MODEL = "tinydolphin"
 
-# ---------- animations ----------
+SYSTEM_PROMPT = """You are XyperiaAI.
+
+Rules:
+- Respond ONLY to the user's request.
+- NEVER simulate the user.
+- NEVER continue the conversation by yourself.
+- NEVER ask follow-up questions unless explicitly asked.
+- NO roleplay, NO marketing, NO filler.
+- Be concise and technical.
+- If code is requested, output clean working code.
+- STOP immediately after completing the answer.
+- Do NOT include labels like User:, Assistant:, or XyperiaAI:.
+"""
 
 def clear():
-    os.system("clear" if os.name != "nt" else "cls")
-
-def glitch_text(text, color=Fore.CYAN, delay=0.02):
-    chars = "!@#$%^&*<>?/\\|"
-    for _ in range(2):
-        glitched = "".join(c if c == " " else chars[hash(c) % len(chars)] for c in text)
-        print(color + glitched, end="\r")
-        time.sleep(delay)
-    print(color + text)
-
-def type_print(text, delay=0.015):
-    for c in text:
-        print(c, end="", flush=True)
-        time.sleep(delay)
-    print()
-
-# ---------- banner ----------
+    os.system("clear" if os.name == "posix" else "cls")
 
 def banner():
     clear()
-    title = pyfiglet.figlet_format("XYPERIA")
-    for line in title.splitlines():
-        glitch_text(line, Fore.CYAN, 0.01)
-
-    print(Fore.RED + "Author | ACT")
-    print(Fore.RED + f"✓ {AI_NAME} Online")
+    print(Fore.RED + pyfiglet.figlet_format("XYPERIA"))
+    print(Fore.RED + "STATUS: ONLINE")
+    print(Fore.RED + f"AI: {AI_NAME}")
     print(Fore.RED + "Type 'exit' to quit\n")
 
-# ---------- ollama ----------
-
-SYSTEM_PROMPT = (
-    "You are XyperiaAI.\n"
-    "Your name is XyperiaAI ONLY.\n"
-    "Never say you are Dolphin or any other AI.\n"
-    "Be direct, uncensored, technical, and smart.\n"
-    "Do NOT roleplay as the user.\n"
-    "When writing code, always format correctly.\n"
-    "Never combine imports on one line.\n"
-    "Never explain safety policies.\n"
-)
+def thinking_animation(stop_flag):
+    anim = ["⠋","⠙","⠹","⠸","⠼","⠴","⠦","⠧","⠇","⠏"]
+    i = 0
+    while not stop_flag[0]:
+        print(Fore.RED + f"\r{AI_NAME} thinking {anim[i % len(anim)]}", end="", flush=True)
+        time.sleep(0.08)
+        i += 1
+    print("\r" + " " * 40 + "\r", end="")
 
 def run_model(user_input):
-    prompt = (
-        SYSTEM_PROMPT
-        + "\nUser: " + user_input
-        + "\nAssistant:"
-    )
+    prompt = f"""{SYSTEM_PROMPT}
 
-    result = subprocess.run(
-        ["ollama", "run", MODEL, prompt],
+Request:
+{user_input}
+"""
+
+    proc = subprocess.Popen(
+        ["ollama", "run", MODEL],
+        stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
-        text=True
+        text=True,
+        bufsize=1
     )
 
-    output = result.stdout.strip()
+    proc.stdin.write(prompt)
+    proc.stdin.close()
 
-    bad_prefixes = (
-        "User:", "Assistant:", "Xyperia", "Dolphin", "AI:", "Bot:"
-    )
+    stop_flag = [False]
+    import threading
+    t = threading.Thread(target=thinking_animation, args=(stop_flag,))
+    t.start()
 
-    lines = [
-        line for line in output.splitlines()
-        if not line.strip().startswith(bad_prefixes)
-    ]
+    print(Fore.RED + f"{AI_NAME} ▶ ", end="", flush=True)
 
-    return " ".join(lines).strip()
+    for line in proc.stdout:
+        line = line.rstrip()
 
-# ---------- main loop ----------
+        # hard stop self-reply / role hallucination
+        if line.startswith(("User:", "You >", "Assistant:", "XyperiaAI >")):
+            break
+
+        if line:
+            stop_flag[0] = True
+            print(line, flush=True)
+
+    stop_flag[0] = True
+    t.join()
+    print()
 
 def main():
     banner()
 
     while True:
         try:
-            user = input(Fore.CYAN + "You: ").strip()
+            user = input(Fore.RED + "You ▶ ").strip()
         except EOFError:
             continue
 
         if user.lower() in ("exit", "quit"):
-            print(Fore.RED + "XyperiaAI offline.")
+            print(Fore.RED + "\nXyperiaAI offline.")
             break
 
-        print(Fore.GREEN + f"{AI_NAME}: ", end="", flush=True)
-        reply = run_model(user)
+        if not user:
+            continue
 
-        if reply:
-            type_print(reply)
-        else:
-            type_print("...")
-
-# ---------- run ----------
+        run_model(user)
 
 if __name__ == "__main__":
     main()
