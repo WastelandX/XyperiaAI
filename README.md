@@ -1,6 +1,6 @@
 # XyperiaAI • Uncensored
 
-A lightweight, local, uncensored AI chatbot powered by ollama models
+A lightweight, local, uncensored AI
 
 ## Features
 - 🔥 Uncensored responses
@@ -11,7 +11,7 @@ A lightweight, local, uncensored AI chatbot powered by ollama models
 ## Requirements
 - Python 3.9+
 - ~1 GB free storage
-- ~1.5 GB RAM recommended
+- ~1.5 FREE GB RAM recommended
 
 ## Installation
 
