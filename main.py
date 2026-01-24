@@ -6,8 +6,8 @@ import threading
 
 # ================= CONFIG =================
 MODEL_BASE = "tinydolphin"
-MODEL_NAME = "xyperia"
-AUTHOR = "ACT"
+MODEL_NAME = "xyperiaV1, its small model so some bugs are commen to this  AI"
+AUTHOR = "Act"
 
 TYPING_DELAY = 0.015  # lower = faster typing
 # ==========================================
