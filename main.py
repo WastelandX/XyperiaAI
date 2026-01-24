@@ -1,12 +1,9 @@
 import subprocess
-import sys
 import os
 
-# ========== CONFIG ==========
-MODEL_NAME = "dolphin-phi:latest"  # change to "phi:2" if needed
+MODEL = "phi:2"
 AI_NAME = "XyperiaAI"
 AUTHOR = "ACT"
-# ============================
 
 # Colors
 CYAN = "\033[96m"
@@ -30,45 +27,49 @@ def banner():
     print(GREEN + f"✔ {AI_NAME} Online" + RESET)
     print(YELLOW + "Type 'exit' to quit\n" + RESET)
 
-def ask_ollama(user_input):
-    system_prompt = (
-        "You are XyperiaAI.\n"
-        "Be direct, concise, and clear.\n"
-        "Do NOT rhyme.\n"
-        "Do NOT roleplay.\n"
-        "Do NOT repeat the user.\n"
-        "No unnecessary words.\n"
-        "Answer straight to the point.\n"
-    )
-
+def run_phi(prompt):
     try:
-        result = subprocess.run(
-            [
-                "ollama",
-                "run",
-                MODEL_NAME
-            ],
-            input=f"{system_prompt}\n{user_input}",
-            text=True,
-            capture_output=True,
-            check=True
+        p = subprocess.Popen(
+            ["ollama", "run", MODEL],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
         )
-        return result.stdout.strip()
 
-    except subprocess.CalledProcessError as e:
-        return RED + "Model error or crashed." + RESET
+        # VERY SMALL PROMPT → prevents crash
+        clean_prompt = (
+            "Answer briefly and directly.\n"
+            "No poetry. No roleplay.\n"
+            f"User: {prompt}\n"
+            f"{AI_NAME}:"
+        )
+
+        out, err = p.communicate(clean_prompt, timeout=30)
+
+        if err.strip():
+            return RED + "Model error or out of memory." + RESET
+
+        return out.strip()
+
+    except subprocess.TimeoutExpired:
+        p.kill()
+        return RED + "Model timed out." + RESET
+
+    except Exception as e:
+        return RED + "Crash occurred." + RESET
 
 def main():
     banner()
     while True:
         try:
-            user_input = input(CYAN + "You: " + RESET).strip()
-            if user_input.lower() in ["exit", "quit"]:
+            user = input(CYAN + "You: " + RESET).strip()
+            if user.lower() in ["exit", "quit"]:
                 print(GREEN + "Bye 👋" + RESET)
                 break
 
-            response = ask_ollama(user_input)
-            print(GREEN + f"{AI_NAME}: " + RESET + response + "\n")
+            reply = run_phi(user)
+            print(GREEN + f"{AI_NAME}: " + RESET + reply + "\n")
 
         except KeyboardInterrupt:
             print("\n" + GREEN + "Exited." + RESET)
