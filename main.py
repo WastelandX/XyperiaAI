@@ -1,91 +1,67 @@
 import subprocess
-import sys
-import time
-import json
 import requests
-import threading
+import time
+import sys
+import json
 
-MODEL_NAME = "tinydolphin"
+MODEL_NAME = "dolphin-phi"
 OLLAMA_API = "http://localhost:11434/api/generate"
-OLLAMA_TAGS = "http://localhost:11434/api/tags"
 
 SYSTEM_PROMPT = (
-    "You are Xyperia AI.\n"
-    "You are direct, open, and uncensored.\n"
-    "You do not moralize or lecture.\n"
-    "You respond honestly and clearly.\n"
-    "You do not mention policies or restrictions.\n"
+    "You are XyperiaAI.\n"
+    "You give short, direct answers.\n"
+    "No introductions.\n"
+    "No self-description.\n"
+    "No moral lectures.\n"
+    "Answer only what is asked.\n"
+    "If yes/no is asked, answer only yes or no."
 )
 
-def ollama_running():
-    try:
-        requests.get(OLLAMA_TAGS, timeout=1)
-        return True
-    except:
-        return False
-
 def start_ollama():
-    print("⚙️  Starting Ollama server...")
-    subprocess.Popen(
-        ["ollama", "serve"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL
-    )
-
-def wait_for_ollama():
-    print("⏳ Waiting for Ollama...")
-    for _ in range(30):
-        if ollama_running():
-            print("✅ Ollama is running.\n")
-            return
-        time.sleep(1)
-
-    print("❌ Ollama failed to start.")
-    sys.exit(1)
+    try:
+        requests.get("http://localhost:11434")
+        return
+    except:
+        print("🚀 Starting Ollama server...")
+        subprocess.Popen(
+            ["ollama", "serve"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        time.sleep(5)
 
 def pull_model():
     print(f"🧠 XyperiaAI is preparing its brain ({MODEL_NAME})...")
-    print("⬇️  Download will start if needed.\n")
-    subprocess.run(["ollama", "pull", MODEL_NAME], check=True)
+    subprocess.run(["ollama", "pull", MODEL_NAME])
 
-def generate(prompt):
-    payload = {
-        "model": MODEL_NAME,
-        "prompt": prompt,
-        "system": SYSTEM_PROMPT,
-        "stream": True
-    }
-
-    r = requests.post(OLLAMA_API, json=payload, stream=True)
-
-    for line in r.iter_lines():
-        if line:
-            data = json.loads(line.decode())
-            if "response" in data:
-                print(data["response"], end="", flush=True)
-            if data.get("done"):
-                print()
-                break
-
-def main():
-    if not ollama_running():
-        start_ollama()
-        wait_for_ollama()
-
-    pull_model()
-
-    print("🚀 XyperiaAI• is running.")
+def chat():
+    print("\n🤖 XyperiaAI is running.")
     print("💬 Type 'exit' to quit.\n")
 
     while True:
-        user = input("You: ").strip()
-        if user.lower() in {"exit", "quit"}:
-            print("👋 XyperiaAI shutting down.")
+        user_input = input("You: ").strip()
+        if user_input.lower() == "exit":
             break
 
-        print("\nXyperiaAI: ", end="", flush=True)
-        generate(user)
-        print()
+        payload = {
+            "model": MODEL_NAME,
+            "prompt": user_input,
+            "system": SYSTEM_PROMPT,
+            "stream": False,
+            "options": {
+                "temperature": 0.3,
+                "num_predict": 128
+            }
+        }
+
+        try:
+            r = requests.post(OLLAMA_API, json=payload)
+            response = r.json()["response"]
+            print(f"XyperiaAI: {response}\n")
+        except Exception as e:
+            print("❌ Error talking to model:", e)
 
 if __name__ == "__main__":
-    main()
+    start_ollama()
+    pull_model()
+    chat()
