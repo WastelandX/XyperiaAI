@@ -1,100 +1,58 @@
-import os, sys, time, requests
-from llama_cpp import Llama
-from colorama import Fore, Style, init
+import requests
+import time
+import sys
 
-init(autoreset=True)
+OLLAMA_URL = "http://localhost:11434/api/generate"
+MODEL = "dolphin-phi:2.7b"
+AI_NAME = "Xyperia"
 
-AI_NAME = "XyperiaAI"
-
-MODEL_NAME = "gemma-3-1b-it-heretic-extreme-uncensored-abliterated.Q4_K_S.gguf"
-MODEL_URL = (
-    "https://huggingface.co/TheBloke/"
-    "gemma-3-1b-it-Heretic-Extreme-GGUF/resolve/main/"
-    + MODEL_NAME
-)
-
-# --------- typing animation ----------
-def type_print(text, delay=0.012):
-    for c in text:
-        sys.stdout.write(c)
+def loading(text="Initializing Xyperia"):
+    for i in range(3):
+        sys.stdout.write(f"\r{text}{'.' * (i+1)}   ")
         sys.stdout.flush()
-        time.sleep(delay)
+        time.sleep(0.5)
     print()
 
-# --------- download ----------
-def download_model():
-    print(Fore.YELLOW + "🔒 This model requires a Hugging Face token.")
-    token = input(Fore.CYAN + "Enter HF token: ").strip()
+def chat(prompt):
+    payload = {
+        "model": MODEL,
+        "prompt": prompt,
+        "stream": False,
+        "options": {
+            "temperature": 0.9,
+            "top_p": 0.95,
+            "num_ctx": 2048,
+            "num_predict": 256
+        }
+    }
 
-    headers = {"Authorization": f"Bearer {token}"}
-    with requests.get(MODEL_URL, headers=headers, stream=True) as r:
-        if r.status_code == 401:
-            print(Fore.RED + "❌ Invalid token or no access to this model.")
-            sys.exit(1)
-        r.raise_for_status()
-        with open(MODEL_NAME, "wb") as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                if chunk:
-                    f.write(chunk)
+    r = requests.post(OLLAMA_URL, json=payload, timeout=120)
+    r.raise_for_status()
+    return r.json()["response"]
 
-    print(Fore.GREEN + "✅ Model downloaded successfully.\n")
+def main():
+    loading()
+    print(f"\n🧠 {AI_NAME} is online.")
+    print("💬 Type 'exit' to quit.\n")
 
-# --------- check ----------
-if not os.path.exists(MODEL_NAME):
-    print(Fore.YELLOW + "⚠ Model not found.")
-    download_model()
+    while True:
+        try:
+            user = input("You > ").strip()
+            if user.lower() in ["exit", "quit"]:
+                print(f"\n{AI_NAME} > Goodbye.")
+                break
 
-# --------- banner ----------
-print(Fore.CYAN + Style.BRIGHT + r"""
-██╗  ██╗██╗   ██╗██████╗ ███████╗██████╗ ██╗ █████╗
-╚██╗██╔╝╚██╗ ██╔╝██╔══██╗██╔════╝██╔══██╗██║██╔══██╗
- ╚███╔╝  ╚████╔╝ ██████╔╝█████╗  ██████╔╝██║███████║
- ██╔██╗   ╚██╔╝  ██╔═══╝ ██╔══╝  ██╔══██╗██║██╔══██║
-██╔╝ ██╗   ██║   ██║     ███████╗██║  ██║██║██║  ██║
-╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝
-""")
-print(Fore.GREEN + "✔ XyperiaAI Online")
-print(Fore.YELLOW + "Type 'exit' to quit\n")
+            loading(f"{AI_NAME} thinking")
+            reply = chat(user)
+            print(f"\n{AI_NAME} > {reply}\n")
 
-# --------- load model (LOW RAM, NOT DUMB) ----------
-llm = Llama(
-    model_path=MODEL_NAME,
-    n_ctx=1024,          # keep memory low
-    n_threads=4,
-    n_batch=64,
-    use_mmap=True,       # huge RAM saver
-    use_mlock=False,     # android-safe
-    f16_kv=True          # better memory efficiency
-)
+        except KeyboardInterrupt:
+            print("\nInterrupted.")
+            break
+        except Exception as e:
+            print("\n⚠️ Error:", e)
+            print("⚠️ If this repeats → Android RAM killer got us.")
+            break
 
-SYSTEM_PROMPT = (
-    "You are XyperiaAI. Be direct, concise, and intelligent. "
-    "Do not roleplay as a human. Do not invent names. "
-    "Avoid unnecessary filler, rhyming, or self-talk. "
-    "Answer clearly and honestly."
-)
-
-# --------- chat ----------
-while True:
-    user = input(Fore.CYAN + "You: " + Style.RESET_ALL).strip()
-    if user.lower() in ("exit", "quit"):
-        break
-    if not user:
-        continue
-
-    prompt = f"{SYSTEM_PROMPT}\nUser: {user}\nAssistant:"
-
-    try:
-        out = llm(
-            prompt,
-            max_tokens=256,
-            temperature=0.9,
-            top_p=0.95,
-            stop=["User:", "Assistant:"]
-        )
-        reply = out["choices"][0]["text"].strip()
-        print(Fore.GREEN + f"{AI_NAME}: ", end="")
-        type_print(reply)
-
-    except Exception as e:
-        print(Fore.RED + "⚠ Generation failed (RAM limit hit).")
+if __name__ == "__main__":
+    main()
