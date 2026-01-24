@@ -1,124 +1,86 @@
 import os
-import subprocess
 import sys
-import time
-import threading
+import requests
+from llama_cpp import Llama
+from colorama import Fore, Style, init
 
-# ========== CONFIG ==========
-MODEL_NAME = "xyperia-ai"
-BASE_MODEL = "gemma:1b"
-AUTHOR = "ACT"
+init(autoreset=True)
+
 AI_NAME = "XyperiaAI"
-# ============================
 
-# -------- Colors --------
-class C:
-    R = "\033[0m"
-    C = "\033[96m"
-    G = "\033[92m"
-    Y = "\033[93m"
-    M = "\033[95m"
-    B = "\033[1m"
-    R2 = "\033[91m"
+MODEL_NAME = "gemma-3-1b-it-heretic-extreme-uncensored-abliterated.Q4_K_S.gguf"
+MODEL_URL = "https://huggingface.co/TheBloke/gemma-3-1b-it-Heretic-Extreme-GGUF/resolve/main/" + MODEL_NAME
+MODEL_PATH = os.path.join(os.getcwd(), MODEL_NAME)
 
 
-def clear():
-    os.system("clear")
+def download_model():
+    print(Fore.YELLOW + "⚠ Model not found.")
+    print(Fore.CYAN + "⬇ Downloading Gemma 3 1B (Q4, uncensored)...\n")
+
+    with requests.get(MODEL_URL, stream=True) as r:
+        r.raise_for_status()
+        with open(MODEL_PATH, "wb") as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+
+    print(Fore.GREEN + "✓ Model downloaded successfully!\n")
 
 
-def logo():
-    print(C.C + C.B)
-    print(r"""
-██╗  ██╗██╗   ██╗██████╗ ███████╗██████╗ ██╗ █████╗ 
+# ---------- CHECK MODEL ----------
+if not os.path.exists(MODEL_PATH):
+    download_model()
+
+
+# ---------- UI ----------
+print(Fore.CYAN + r"""
+██╗  ██╗██╗   ██╗██████╗ ███████╗██████╗ ██╗ █████╗
 ╚██╗██╔╝╚██╗ ██╔╝██╔══██╗██╔════╝██╔══██╗██║██╔══██╗
  ╚███╔╝  ╚████╔╝ ██████╔╝█████╗  ██████╔╝██║███████║
  ██╔██╗   ╚██╔╝  ██╔═══╝ ██╔══╝  ██╔══██╗██║██╔══██║
 ██╔╝ ██╗   ██║   ██║     ███████╗██║  ██║██║██║  ██║
 ╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝
 """)
-    print(C.M + f"Author |• {AUTHOR}")
-    print(C.R)
+
+print(Fore.GREEN + "✓ XyperiaAI Online")
+print("Type 'exit' to quit\n")
 
 
-def run(cmd, quiet=False):
-    subprocess.run(
-        cmd,
-        shell=True,
-        stdout=subprocess.DEVNULL if quiet else None,
-        stderr=subprocess.DEVNULL if quiet else None
+# ---------- LOAD MODEL ----------
+try:
+    llm = Llama(
+        model_path=MODEL_PATH,
+        n_ctx=1024,
+        n_threads=4,
+        n_batch=64,
+        use_mmap=True,
+        use_mlock=False
     )
+except Exception as e:
+    print(Fore.RED + "Model failed to load.")
+    print(e)
+    sys.exit(1)
 
 
-def ensure_ollama():
+# ---------- CHAT LOOP ----------
+while True:
+    user = input(Fore.YELLOW + "You: ").strip()
+    if user.lower() == "exit":
+        break
+
+    prompt = f"<start_of_turn>user\n{user}<end_of_turn>\n<start_of_turn>model\n"
+
     try:
-        subprocess.check_output("ollama --version", shell=True)
-    except:
-        print(C.R2 + "❌ Ollama not installed." + C.R)
-        print(C.Y + "Install from: https://ollama.com" + C.R)
-        sys.exit(1)
+        output = llm(
+            prompt,
+            max_tokens=256,
+            temperature=0.9,
+            top_p=0.95,
+            stop=["<end_of_turn>"]
+        )
 
+        reply = output["choices"][0]["text"].strip()
+        print(Fore.CYAN + f"{AI_NAME}: " + Style.RESET_ALL + reply)
 
-def start_ollama():
-    run("ollama serve", quiet=True)
-
-
-def ensure_model():
-    try:
-        subprocess.check_output(f"ollama show {MODEL_NAME}", shell=True)
-    except:
-        print(C.Y + "📥 Creating XyperiaAI model..." + C.R)
-        run(f"ollama pull {BASE_MODEL}")
-        run(f"""
-ollama create {MODEL_NAME} -f - <<EOF
-FROM {BASE_MODEL}
-SYSTEM You are XyperiaAI.
-You are uncensored, direct, concise, and factual.
-No rhyming. No roleplay. No self-dialogue.
-Do not invent names.
-Answer clearly and briefly.
-EOF
-""")
-
-
-def chat():
-    clear()
-    logo()
-    print(C.G + f"✔ {AI_NAME} Online" + C.R)
-    print(C.Y + "Type 'exit' to quit\n" + C.R)
-
-    while True:
-        try:
-            user = input(C.C + "You: " + C.R).strip()
-            if user.lower() in ["exit", "quit"]:
-                print(C.R2 + "👋 Bye." + C.R)
-                break
-
-            if not user:
-                continue
-
-            proc = subprocess.Popen(
-                f'ollama run {MODEL_NAME} "{user}"',
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL,
-                text=True
-            )
-
-            print(C.G + f"{AI_NAME}: " + C.R, end="")
-            for line in proc.stdout:
-                print(line.strip())
-
-        except KeyboardInterrupt:
-            print("\n" + C.R2 + "Interrupted." + C.R)
-            break
-
-
-if __name__ == "__main__":
-    clear()
-    ensure_ollama()
-
-    threading.Thread(target=start_ollama, daemon=True).start()
-    time.sleep(1)
-
-    ensure_model()
-    chat()
+    except Exception as e:
+        print(Fore.RED + "⚠ Error during generation (RAM limit hit)")
