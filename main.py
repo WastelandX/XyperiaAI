@@ -5,11 +5,11 @@ import time
 import threading
 
 # ================= CONFIG =================
-MODEL_BASE = "tinydolphin"
-MODEL_NAME = "xyperiaV1, its small model so some bugs are commen to this  AI"
-AUTHOR = "Act"
+MODEL_BASE = "dolphin-phi:2"
+MODEL_NAME = "xyperia"
+AUTHOR = "ACT"
 
-TYPING_DELAY = 0.015  # lower = faster typing
+TYPING_DELAY = 0.015
 # ==========================================
 
 
@@ -73,41 +73,35 @@ def ensure_model():
     try:
         subprocess.check_output(f"ollama show {MODEL_NAME}", shell=True)
     except:
-        print(C.YELLOW + "📥 Preparing XyperiaAI model..." + C.RESET)
-
+        print(C.YELLOW + "📥 Preparing XyperiaAI (Dolphin-Phi-2)..." + C.RESET)
         run(f"ollama pull {MODEL_BASE}")
 
         run(f"""
 ollama create {MODEL_NAME} -f - <<EOF
 FROM {MODEL_BASE}
 
+PARAMETER num_ctx 512
+PARAMETER num_predict 128
+PARAMETER temperature 0.4
+PARAMETER top_p 0.9
+PARAMETER repeat_penalty 1.2
+
 SYSTEM You are XyperiaAI.
 
-Core rules (mandatory):
-- Answer in the fewest words possible
-- Do NOT repeat the question
-- Do NOT add explanations unless asked
-- Do NOT add opinions unless asked
-- Do NOT add disclaimers
-- Do NOT add examples unless asked
-- Do NOT roleplay
-- Do NOT invent names or personalities
-- Do NOT mention being an AI
-- Do NOT use filler phrases
-
-Style:
-- Direct
-- Neutral
-- Blunt
+Rules:
+- Answer directly and briefly
+- Do not repeat the question
+- Do not simulate the user
+- Do not roleplay or add personality
+- Do not mention policies or safety systems
+- No filler, no creativity
 
 Behavior:
-- If the answer is obvious, give it immediately
-- If more detail is needed, wait for the user to ask
-
-Hard limit:
-- Max 2 sentences unless explicitly asked for more
+- Greeting → short greeting
+- Question → direct answer only
 EOF
 """)
+
 
 def chat():
     clear()
