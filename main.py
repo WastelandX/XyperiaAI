@@ -30,6 +30,8 @@ def clear():
 def banner():
     clear()
     print(Fore.RED + pyfiglet.figlet_format("XYPERIA"))
+    print(Fore.RED + "Author [Act]")
+    print(Fore.RED + "Note: Use this AI tool at your own risk, it's common to face bugs in this AI.")
     print(Fore.RED + "STATUS: ONLINE")
     print(Fore.RED + f"AI: {AI_NAME}")
     print(Fore.RED + "Type 'exit' to quit\n")
