@@ -80,7 +80,7 @@ def show_banner():
     ╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝
     """
     console.print(Text(banner, style="bold cyan"))
-    console.print(Panel(f"      [bold white]{BRAND} A.I.[/bold white]\n[dim]Uncensored Mode • Custom Prompt Active[/dim]", expand=False, border_style="cyan"))
+    console.print(Panel(f"      [bold white]{BRAND} A.I.[/bold white]\n[dim]Uncensored Mode • Made by [Act].[/dim]", expand=False, border_style="cyan"))
 
 # --- 4. CHAT LOOP ---
 def chat():
