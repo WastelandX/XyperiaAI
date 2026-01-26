@@ -56,7 +56,7 @@ def show_banner():
     ╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝
     """
     console.print(Text(banner, style="bold cyan"))
-    console.print(Panel(f"      [bold white]{BRAND} A.I.[/bold white]\n[dim]System Online • Uncensored[/dim]", expand=False, border_style="cyan"))
+    console.print(Panel(f"      [bold white]{BRAND} A.I.[/bold white]\n[dim]Made by [Act]. System Online • Uncensored[/dim]", expand=False, border_style="blue"))
 
 # --- 4. CHAT LOOP WITH SPACING ---
 def start_chat():
