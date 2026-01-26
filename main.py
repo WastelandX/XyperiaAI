@@ -52,7 +52,7 @@ def ensure_model():
     except:
         pass
 
-    print(Fore.YELLOW + f"\nDownloading {AI_NAME} model ({MODEL}) — please wait…\n")
+    print(Fore.YELLOW + f"\nDownloading {AI_NAME} — please wait…\n")
 
     proc = subprocess.Popen(
         ["ollama", "pull", MODEL],
