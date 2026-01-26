@@ -11,7 +11,7 @@ init(autoreset=True)
 # ================= CONFIG =================
 BASE_OLLAMA = "http://127.0.0.1:11434"
 OLLAMA_URL = f"{BASE_OLLAMA}/api/generate"
-MODEL = "qwen:0.5b"
+MODEL = "dolphin-qwen:0.5b-uncensored"
 AI_NAME = "Xyperia"
 AUTHOR = "Act"
 # =========================================
