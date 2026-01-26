@@ -69,7 +69,7 @@ def logo():
 ╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝
 """)
     print(Fore.CYAN + f"        {AI_NAME} AI")
-    print(Fore.YELLOW + "   Local • Tiny • Intelligent • Sober")
+    print(Fore.YELLOW + "   Local • uncensored • Intelligent • Sober")
     print(Fore.MAGENTA + f"        Author: {AUTHOR}\n")
 
 # ---------- MODEL CHECK ----------
