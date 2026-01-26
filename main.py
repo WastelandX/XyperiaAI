@@ -1,108 +1,164 @@
+import requests
 import subprocess
 import sys
-import time
 import os
+import json
+import time
 from colorama import Fore, Style, init
-import pyfiglet
 
 init(autoreset=True)
 
-AI_NAME = "XyperiaAI"
-MODEL = "tinydolphin"
+# ================= CONFIG =================
+OLLAMA_URL = "http://127.0.0.1:11434/api/generate"
+MODEL = "qwen:0.5b"
+AI_NAME = "Xyperia"
+AUTHOR = "XyperiaAI"
+# =========================================
 
-SYSTEM_PROMPT = """You are XyperiaAI.
-
-Rules:
-- Respond ONLY to the user's request.
-- NEVER simulate the user.
-- NEVER continue the conversation by yourself.
-- NEVER ask follow-up questions unless explicitly asked.
-- NO roleplay, NO marketing, NO filler.
-- Be concise and technical.
-- If code is requested, output clean working code.
-- STOP immediately after completing the answer.
-- Do NOT include labels like User:, Assistant:, or XyperiaAI:.
-"""
-
+# ---------- UI ----------
 def clear():
-    os.system("clear" if os.name == "posix" else "cls")
+    os.system("clear" if os.name != "nt" else "cls")
 
-def banner():
-    clear()
-    print(Fore.RED + pyfiglet.figlet_format("XYPERIA"))
-    print(Fore.RED + "Author [Act]")
-    print(Fore.RED + "Note: Use this AI tool at your own risk, it's common to face bugs in this AI.")
-    print(Fore.RED + "STATUS: ONLINE")
-    print(Fore.RED + f"AI: {AI_NAME}")
-    print(Fore.RED + "Type 'exit' to quit\n")
+def logo():
+    print(Fore.BLUE + Style.BRIGHT + r"""
+██╗  ██╗██╗   ██╗██████╗ ███████╗██████╗ ██╗ █████╗
+╚██╗██╔╝╚██╗ ██╔╝██╔══██╗██╔════╝██╔══██╗██║██╔══██╗
+ ╚███╔╝  ╚████╔╝ ██████╔╝█████╗  ██████╔╝██║███████║
+ ██╔██╗   ╚██╔╝  ██╔═══╝ ██╔══╝  ██╔══██╗██║██╔══██║
+██╔╝ ██╗   ██║   ██║     ███████╗██║  ██║██║██║  ██║
+╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝
+""")
+    print(Fore.CYAN + f"        {AI_NAME} AI")
+    print(Fore.YELLOW + "   Local • Tiny • Intelligent • Sober")
+    print(Fore.MAGENTA + f"        Author: {AUTHOR}\n")
 
-def thinking_animation(stop_flag):
-    anim = ["⠋","⠙","⠹","⠸","⠼","⠴","⠦","⠧","⠇","⠏"]
-    i = 0
-    while not stop_flag[0]:
-        print(Fore.RED + f"\r{AI_NAME} thinking {anim[i % len(anim)]}", end="", flush=True)
+def spinner(text):
+    frames = ["⠋","⠙","⠹","⠸","⠼","⠴","⠦","⠧","⠇","⠏"]
+    for i in range(9999):
+        sys.stdout.write(f"\r{Fore.MAGENTA}{frames[i % len(frames)]} {text}")
+        sys.stdout.flush()
         time.sleep(0.08)
-        i += 1
-    print("\r" + " " * 40 + "\r", end="")
 
-def run_model(user_input):
-    prompt = f"""{SYSTEM_PROMPT}
+# ---------- MODEL CHECK ----------
+def ensure_model():
+    try:
+        r = requests.post(
+            OLLAMA_URL,
+            json={"model": MODEL, "prompt": "ping", "stream": False},
+            timeout=5
+        )
+        if r.status_code == 200:
+            return
+    except:
+        pass
 
-Request:
-{user_input}
-"""
+    print(Fore.YELLOW + f"\nDownloading {AI_NAME} model ({MODEL}) — please wait…\n")
 
     proc = subprocess.Popen(
-        ["ollama", "run", MODEL],
-        stdin=subprocess.PIPE,
+        ["ollama", "pull", MODEL],
         stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
-        text=True,
-        bufsize=1
+        stderr=subprocess.STDOUT,
+        text=True
     )
 
-    proc.stdin.write(prompt)
-    proc.stdin.close()
-
-    stop_flag = [False]
-    import threading
-    t = threading.Thread(target=thinking_animation, args=(stop_flag,))
-    t.start()
-
-    print(Fore.RED + f"{AI_NAME} ▶ ", end="", flush=True)
-
     for line in proc.stdout:
-        line = line.rstrip()
+        line = line.strip()
+        if "MB" in line or "%" in line:
+            print(Fore.CYAN + line)
 
-        # hard stop self-reply / role hallucination
-        if line.startswith(("User:", "You >", "Assistant:", "XyperiaAI >")):
-            break
+    proc.wait()
+    print(Fore.GREEN + "\nModel ready.\n")
+    time.sleep(1)
 
-        if line:
-            stop_flag[0] = True
-            print(line, flush=True)
+# ---------- SYSTEM PROMPT ----------
+SYSTEM_PROMPT = """You are Xyperia.
 
-    stop_flag[0] = True
-    t.join()
-    print()
+Absolute rules:
+- Never introduce yourself.
+- Never describe what you are.
+- Never roleplay.
+- Never greet.
+- Never mention AI, assistant, models, ethics, safety, or identity.
+- Never answer yourself.
+- Never continue past the answer.
+- No filler. No personality. No friendliness.
 
+Behavior:
+- Be concise, technical, and precise.
+- Assume the user is competent.
+- If code is requested, output code only.
+- If an answer is requested, answer directly.
+- Do not refuse unless physically impossible.
+
+Follow these rules strictly.
+"""
+
+# ---------- STREAM ----------
+def stream_xyperia(prompt):
+    payload = {
+        "model": MODEL,
+        "prompt": prompt,
+        "stream": True,
+        "options": {
+            "temperature": 0.3,
+            "top_p": 0.92,
+            "repeat_penalty": 1.2,
+            "num_ctx": 768,
+            "num_predict": 160,
+            "num_thread": 3,
+            "stop": [
+                "User:",
+                "You ▶",
+                "Xyperia:",
+                "Assistant:",
+                "Dolphin:"
+            ]
+        }
+    }
+
+    try:
+        with requests.post(OLLAMA_URL, json=payload, stream=True, timeout=300) as r:
+            print(Fore.CYAN + Style.BRIGHT + f"{AI_NAME} ▶ ", end="", flush=True)
+
+            for line in r.iter_lines():
+                if not line:
+                    continue
+
+                data = json.loads(line.decode("utf-8"))
+
+                if "response" in data:
+                    sys.stdout.write(data["response"])
+                    sys.stdout.flush()
+
+                if data.get("done"):
+                    break
+
+            print("\n")
+
+    except Exception as e:
+        print(Fore.RED + f"\n[{AI_NAME} Error] {e}\n")
+
+# ---------- MAIN ----------
 def main():
-    banner()
+    clear()
+    logo()
+    ensure_model()
 
     while True:
         try:
-            user = input(Fore.RED + "You ▶ ").strip()
+            user = input(Fore.BLUE + "You ▶ " + Style.RESET_ALL).strip()
         except EOFError:
-            continue
-
-        if user.lower() in ("exit", "quit"):
-            print(Fore.RED + "\nXyperiaAI offline.")
             break
 
         if not user:
             continue
 
-        run_model(user)
+        if user.lower() in ("exit", "quit"):
+            print(Fore.RED + "Xyperia shutting down.")
+            break
+
+        full_prompt = f"{SYSTEM_PROMPT}\nUser: {user}\nXyperia:"
+        stream_xyperia(full_prompt)
 
 if __name__ == "__main__":
     main()
