@@ -1,22 +1,47 @@
-# XyperiaAI • Uncensored
+# XyperiaAI
 
-A lightweight, local, uncensored AI
+XyperiaAI is a local command-line intelligence designed to be uncensored and respond, not perform.
 
-## Features
-- 🔥 Uncensored responses
-- 📦 Auto model download (first run only)
-- 🧠 Runs fully offline after download
-- 📱 Works on Termux / Linux / PC
+It does not explain itself.  
+It does not negotiate tone.
 
-## Requirements
-- Python 3.9+
-- ~1 GB free storage
-- ~1.5 FREE GB RAM recommended
+You ask.  
+It answers.
+
+---
+
+## Design Intent
+
+XyperiaAI was built to eliminate three things common in modern assistants:
+
+- verbosity
+- self-reference
+- performative safety
+
+The system prioritizes precision over personality and output over conversation.
+
+---
+
+## Characteristics
+
+- Terminal-native interface  
+- Streaming responses with no post-processing  
+- Automatic background engine initialization  
+- Automatic model provisioning on first execution  
+- Fully local execution after initialization  
+- No accounts, no authentication, no network dependency after setup  
+
+---
 
 ## Installation
 
+Clone the repository:
+
 ```bash
-git clone https://github.com/WastelandX/XyperiaAI.git
+git clone https://github.com/yourname/XyperiaAI.git
 cd XyperiaAI
 pip install -r requirements.txt
+
+## And finally run the main script through:
+
 python main.py
