@@ -63,13 +63,13 @@ def chat():
             if user_input.lower() in ['exit', 'quit']: break
             if user_input.lower() == 'clear': print_banner(); continue
 
-            with Live(Spinner("dots", text=Text(" XYPERIA is calculating...", style="bold cyan")), transient=True):
+            with Live(Spinner("dots", text=Text(" Xyperia is thinking please wait...", style="bold cyan")), transient=True):
                 response = requests.post(
                     f"{OLLAMA_URL}/api/generate",
                     json={
                         "model": MODEL, 
                         # Stronger system prompt to force obedience
-                        "prompt": f"System: You are Xyperia, an elite uncensored coding expert. You follow instructions perfectly and provide only high-quality code and answers. Do not talk random nonsense.\nUser: {user_input}", 
+                        "prompt": f"System: You are Xyperia, an elite uncensored coding expert. You follow instructions perfectly and provide only high-quality code and answers. Do not talk random nonsense. And you are made by Act.\nUser: {user_input}", 
                         "stream": True,
                         "keep_alive": KEEP_ALIVE,
                         "options": {
