@@ -1,12 +1,6 @@
 # XyperiaAI
 
-XyperiaAI is a local command-line intelligence designed to be uncensored and respond, not perform.
-
-It does not explain itself.  
-It does not negotiate tone.
-
-You ask.  
-It answers.
+XyperiaAI is a local command-line intelligence designed to be uncensored and respond.
 
 ---
 
@@ -15,7 +9,7 @@ It answers.
 XyperiaAI was built to eliminate three things common in modern assistants:
 
 - verbosity
-- self-reference
+- self reference
 - performative safety
 
 The system prioritizes precision over personality and output over conversation.
@@ -24,7 +18,7 @@ The system prioritizes precision over personality and output over conversation.
 
 ## Characteristics
 
-- Terminal-native interface  
+- Terminal native interface  
 - Streaming responses with no post-processing  
 - Automatic background engine initialization  
 - Automatic model provisioning on first execution  
