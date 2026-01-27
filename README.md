@@ -1,41 +1,18 @@
-# XyperiaAI
+# ⚡ XyperiaAI: The Uncensored Coding Expert
+> **Author:** [Act|WastelandX]  
 
-XyperiaAI is a local command-line intelligence designed to be uncensored and respond.
+Xyperia is a high-performance, fully uncensored terminal AI designed for expert-level coding and logic tasks. Built specifically for mobile performance in Termux, it uses local LLM power to provide unfiltered responses without a subscription.
 
----
+## Features
+* **Fully Uncensored:** No safety filters, no refusal. Just pure code.
+* **Smart-Core Logic:** Optimized temperature and penalty settings for the 1.5B model.
+* **Auto-Engine:** Automatically starts the Ollama server in the background.
+* **Smooth UI:** Professional animations, live thinking spinners, and progress bars.
+* **Fast-Core:** Persistent RAM locking for near-instant responses.
 
-## Design Intent
+##  Quick Start (Termux/Linux)
 
-XyperiaAI was built to eliminate three things common in modern assistants:
+### 1. Prerequisites
+Ensure you have **Ollama** installed on your system.
+```
 
-- verbosity
-- self reference
-- performative safety
-
-The system prioritizes precision over personality and output over conversation.
-
----
-
-## Characteristics
-
-- Terminal native interface  
-- Streaming responses with no post-processing  
-- Automatic background engine initialization  
-- Automatic model provisioning on first execution  
-- Fully local execution after initialization  
-- No accounts, no authentication, no network dependency after setup  
-
----
-
-## Installation
-
-Clone the repository:
-
-```bash
-git clone https://github.com/yourname/XyperiaAI.git
-cd XyperiaAI
-pip install -r requirements.txt
-
-## And finally run the main script through:
-
-python main.py
