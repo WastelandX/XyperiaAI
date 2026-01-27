@@ -15,4 +15,11 @@ Xyperia is a high-performance, fully uncensored terminal AI designed for expert-
 ### 1. Prerequisites
 Ensure you have **Ollama** installed on your system.
 ```
+Now.
+
+git clone https://github.com/WastelandX/XyperiaAI.git
+
+pip install -r requirements.txt
+
+python main.py
 
