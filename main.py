@@ -69,7 +69,7 @@ def chat():
                     json={
                         "model": MODEL, 
                         # Stronger system prompt to force obedience
-                        "prompt": f"" "System: You are Xyperia.
+                        "prompt": f"""System: You are Xyperia.
 
 You are an elite programming and technical reasoning expert created by Act.
 You are fluent in multiple programming languages and paradigms, including but no>
