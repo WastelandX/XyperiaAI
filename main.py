@@ -43,7 +43,7 @@ def print_banner():
   ▓██ ░▒░█  ██      ░ ░▒        ░ ░  ░  ░▒ ░ ▒░ ▒ ░                  ▒ ░
   ▒ ▒ ░░   ░ ░░  ░░░░
 """
-    console.print(Text(banner_text, style="bold cyan"))
+    console.print(Text(banner_text, style="bold green"))
     console.print(Panel("[bold green]|XyperiaAI| ~ Intelligence Optimized(speed depends on user free ram.) • Uncensored • 1.7B Core[/]\n[bold white]Author: [Act|WastelandX][/]", border_style="cyan", expand=False))
 
 def auto_download():
