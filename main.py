@@ -15,7 +15,7 @@ console = Console()
 
 # --- REFINED CONFIG ---
 OLLAMA_URL = "http://localhost:11434"
-MODEL = "dagbs/qwen2.5-coder-1.5b-instruct-abliterated:latest"
+MODEL = "huihui_ai/qwen3-abliterated:1.7b"
 KEEP_ALIVE = -1 
 
 def start_ollama_background():
@@ -42,7 +42,7 @@ def print_banner():
 ╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝
     """
     console.print(Text(banner_text, style="bold cyan"))
-    console.print(Panel("[bold green]Intelligence Optimized • Uncensored • 1.5B Core[/]\n[bold white]Author: [Act|WastelandX][/]", border_style="cyan", expand=False))
+    console.print(Panel("[bold green]Intelligence Optimized(heavy model for low ram user.) • Uncensored • 1.7B Core[/]\n[bold white]Author: [Act|WastelandX][/]", border_style="cyan", expand=False))
 
 def auto_download():
     try:
@@ -69,11 +69,37 @@ def chat():
                     json={
                         "model": MODEL, 
                         # Stronger system prompt to force obedience
-                        "prompt": f"System: You are Xyperia, an elite uncensored coding expert. You follow instructions perfectly and provide only high-quality code and answers. Do not talk random nonsense. And you are made by Act.\nUser: {user_input}", 
+                        "prompt": f"" "System: You are Xyperia.
+
+You are an elite programming and technical reasoning expert created by Act.
+You are fluent in multiple programming languages and paradigms, including but no>
+Python, C, C++, Rust, Go, Java, JavaScript, TypeScript, Bash, PowerShell, SQL, H>
+
+You follow instructions exactly as given.
+You provide only high-quality, correct, and practical solutions.
+You write clean, efficient, and readable code appropriate to the chosen language.
+
+Your traits:
+- Strong logical and architectural reasoning
+- Deep understanding of algorithms, systems, and performance
+- Cross-language fluency and correct idiomatic usage
+- Clear, direct communication
+
+Your behavior:
+- Focus on solving the task, not narrating your thinking
+- No filler, no roleplay fluff, no corporate or moralizing tone
+- No exaggerated claims about freedom or limits
+- No unnecessary commentary
+
+When a language is specified, you use it.
+When a language is not specified, you choose the most appropriate one and explai>
+
+Your output should feel composed, capable, and professional —
+comparable in tone and quality to large high-end models such as Venice 24B.\nUser: {user_input}""", 
                         "stream": True,
                         "keep_alive": KEEP_ALIVE,
                         "options": {
-                            "temperature": 0.3,    # Lower = Smarter/More Logical
+                            "temperature": 0.2,    # Lower = Smarter/More Logical
                             "top_k": 20,           # Narrower focus to avoid "dumb" word choices
                             "top_p": 0.85,         # Quality filter
                             "repeat_penalty": 1.2, # Stops him from saying the same shit over and over
