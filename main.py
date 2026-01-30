@@ -126,7 +126,7 @@ Output rules:
                     stream=True,
                     timeout=120
                 )
-            
+
             console.print("[bold cyan]XYPERIA [bold white]❯ ", end="")
             for line in response.iter_lines():
                 if line:
@@ -140,5 +140,5 @@ Output rules:
 if __name__ == "__main__":
     start_ollama_background()
     print_banner()
-    auto_download()
-    chat()
+    auto_download()                  
+    chat()                                  
