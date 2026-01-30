@@ -45,7 +45,7 @@ def print_banner():
 •───────────────────────────────────────────────────────────────────────────•
 """
     console.print(Text(banner_text, style="bright cyan"))
-    console.print(Panel("[bold red]|XyperiaAI| ~ Intelligence Optimized(speed depends on user free ram.) • Uncensored • 1.7 Billion Core Ai[/]\n[bold white]Author: [Act|WastelandX][/]", border_style="cyan", expand=False))
+    console.print(Panel("[bold red]|XyperiaAI| ~ Intelligence Optimized(speed depends on user free ram.) • Uncensored • 3B+ Billion Core AI[/]\n[bold white]Author: [Act|WastelandX][/]", border_style="cyan", expand=False))
 
 def auto_download():
     try:
