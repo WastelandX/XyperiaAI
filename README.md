@@ -13,7 +13,8 @@ Xyperia is a high performance, fully uncensored terminal AI designed for expert-
 ##  Quick Start (Termux/Linux)
 
 ### 1. Prerequisites
-Ensure you have **Ollama** installed on your system.
+Ensure you have **Ollama** installed on your system. 
+You atleast need 8 gb ram to run AI smoothly.
 ```
 Now.
 
