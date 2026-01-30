@@ -20,6 +20,8 @@ Now.
 
 git clone https://github.com/WastelandX/XyperiaAI.git
 
+cd XyperiaAI
+
 pip install -r requirements.txt
 
 python main.py
